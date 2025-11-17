@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Filatórios - Controle de Trocas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --primary:#1d4ed8;--primary-dark:#1e40af;--primary-light:#3b82f6;--primary-ultralight:#dbeafe;
+            --secondary:#059669;--secondary-dark:#047857;--accent:#7c3aed;--danger:#dc2626;--warning:#d97706;
+            --success:#059669;--white:#fff;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;
+            --gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;
+            --gray-800:#1e293b;--gray-900:#0f172a;--success-light:#dcfce7;--warning-light:#fef3c7;
+            --danger-light:#fee2e2;--gradient-primary:linear-gradient(135deg,var(--primary),var(--primary-dark));
+            --gradient-secondary:linear-gradient(135deg,var(--secondary),var(--secondary-dark));
+            --gradient-subtle:linear-gradient(135deg,var(--gray-50)0%,var(--gray-100)100%);
+            --gradient-card:linear-gradient(135deg,var(--white)0%,var(--gray-50)100%);--font-light:300;
+            --font-regular:400;--font-medium:500;--font-semibold:600;--font-bold:700;--font-extrabold:800;
+            --text-xs:.75rem;--text-sm:.875rem;--text-base:1rem;--text-lg:1.125rem;--text-xl:1.25rem;
+            --text-2xl:1.5rem;--text-3xl:1.875rem;--text-4xl:2.25rem;--shadow:0 1px 2px rgba(0,0,0,.03),0 2px 4px rgba(0,0,0,.03);
+            --shadow-md:0 4px 6px rgba(0,0,0,.03),0 10px 15px rgba(0,0,0,.03);--shadow-lg:0 10px 10px rgba(0,0,0,.04),0 20px 25px rgba(0,0,0,.03);
+            --border-radius:16px;--border-radius-sm:12px;--border-radius-lg:20px;--transition:all .3s cubic-bezier(.4,0,.2,1)
+        }
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-weight:var(--font-regular);
+            font-size:var(--text-base);background:var(--gradient-subtle);min-height:100vh;display:flex;justify-content:center;
+            align-items:center;color:var(--gray-800);padding:20px;line-height:1.6}
+        .card{background:var(--gradient-card);border-radius:var(--border-radius);box-shadow:var(--shadow-md);
+            border:1px solid var(--gray-200);position:relative;transition:var(--transition)}
+        .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-primary);
+            border-radius:var(--border-radius) var(--border-radius)0 0}
+        .btn{font-family:'Inter',sans-serif;font-weight:var(--font-semibold);padding:14px 20px;border:none;
+            border-radius:var(--border-radius-sm);cursor:pointer;transition:var(--transition);font-size:var(--text-base)}
+        .btn-primary{background:var(--gradient-primary);color:white}
+        .btn-secondary{background:var(--gradient-secondary);color:white}
+        .btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+        .form-group{margin-bottom:20px}
+        .form-group label{font-weight:var(--font-medium);font-size:var(--text-sm);display:block;margin-bottom:8px;color:var(--gray-600)}
+        .form-input,.form-textarea,.filter-select{width:100%;padding:12px 16px;border:1px solid var(--gray-300);
+            border-radius:var(--border-radius-sm);background:var(--white);color:var(--gray-800);transition:var(--transition)}
+        .form-input:focus,.form-textarea:focus,.filter-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+        .lock-screen{padding:48px 32px;text-align:center;max-width:440px;width:90%;backdrop-filter:blur(10px)}
+        .lock-icon{font-size:64px;margin-bottom:24px;color:var(--primary)}
+        .lock-title{font-weight:var(--font-extrabold);font-size:var(--text-3xl);margin-bottom:12px}
+        .turno-indicator{font-weight:var(--font-semibold);font-size:var(--text-sm);background:var(--primary-ultralight);
+            color:var(--primary-dark);padding:8px 20px;border-radius:20px;display:inline-block;margin:12px 0;border:1px solid var(--primary-light)}
+        .password-input{font-weight:var(--font-semibold);font-size:var(--text-lg);width:100%;padding:16px;border:2px solid var(--gray-200);
+            border-radius:var(--border-radius-sm);background:rgba(255,255,255,.8);text-align:center;margin:24px 0;transition:var(--transition);letter-spacing:8px}
+        .password-input:focus{border-color:var(--primary);background:rgba(255,255,255,.95);box-shadow:0 0 0 3px rgba(37,99,235,.1),var(--shadow-md)}
+        .error-message{font-weight:var(--font-medium);color:var(--danger);margin-top:16px;padding:12px;background:var(--danger-light);
+            border-radius:var(--border-radius-sm);display:none}
+        .content{display:none;width:100%;max-width:1200px}
+        .header{padding:32px;text-align:center;margin-bottom:32px;background:linear-gradient(135deg,var(--white)0%,var(--gray-50)100%);border-bottom:3px solid var(--primary)}
+        .site-title{font-weight:var(--font-extrabold);font-size:var(--text-4xl);margin-bottom:8px}
+        .header p{font-weight:var(--font-regular);color:var(--gray-600);font-size:var(--text-lg)}
+        .navigation{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+        .nav-btn{font-weight:var(--font-semibold);font-size:var(--text-sm);padding:14px 24px;background:var(--white);color:var(--gray-600);
+            border:1px solid var(--gray-300);border-radius:var(--border-radius-sm);cursor:pointer;transition:var(--transition)}
+        .nav-btn:hover{border-color:var(--primary);color:var(--primary)}
+        .nav-btn.active{background:var(--gradient-primary);border-color:var(--primary);color:white}
+        .section{display:none}
+        .filatorios-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+        .filatorio-card{padding:24px}
+        .filatorio-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+        .filatorio-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--gray-200)}
+        .filatorio-number{font-weight:var(--font-extrabold);font-size:var(--text-2xl);color:var(--primary-dark)}
+        .status-indicator{font-weight:var(--font-bold);font-size:var(--text-xs);padding:8px 16px;border-radius:20px;color:white;position:relative;padding-left:26px}
+        .status-indicator::before{content:'';position:absolute;left:12px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:currentColor}
+        .status-ok{background:var(--gradient-secondary)}
+        .status-atrasado{background:var(--gradient-primary)}
+        .status-alerta{background:var(--warning)}
+        .status-critico{background:var(--danger)}
+        .proxima-troca{background:var(--primary-ultralight);border-left:4px solid var(--primary);padding:20px;border-radius:var(--border-radius-sm);margin-top:20px}
+        .info-row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:var(--text-sm)}
+        .info-label{font-weight:var(--font-semibold);color:var(--gray-600)}
+        .info-value{font-weight:var(--font-bold);color:var(--primary-dark)}
+        .dias-restantes{font-weight:var(--font-bold);font-size:var(--text-xs);padding:6px 12px;border-radius:16px;color:white}
+        .dias-positivo{background:var(--success)}
+        .dias-negativo{background:var(--danger)}
+        .dias-alerta{background:var(--warning)}
+        .calendar-section,.history-section{padding:32px;margin-bottom:24px}
+        .calendar-header,.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+        .calendar-title,.history-title{font-weight:var(--font-bold);font-size:var(--text-2xl)}
+        .search-container{margin-top:16px}
+        .search-input{width:100%;max-width:300px;padding:10px 16px;border:1px solid var(--gray-300);border-radius:var(--border-radius-sm)}
+        .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+        .calendar-day{font-weight:var(--font-semibold);font-size:var(--text-xs);padding:16px 8px;text-align:center;background:var(--gray-50);
+            border-radius:var(--border-radius-sm);color:var(--gray-600);border:1px solid var(--gray-200)}
+        .calendar-date{font-size:var(--text-xs);padding:12px 8px;text-align:center;background:var(--white);border-radius:var(--border-radius-sm);
+            border:1px solid var(--gray-200);min-height:80px;display:flex;flex-direction:column;justify-content:space-between}
+        .calendar-date.has-troca{background:var(--primary-ultralight);border:2px solid var(--primary)}
+        .calendar-date.today{background:var(--gradient-primary);color:white;border-color:var(--primary)}
+        .date-number{font-weight:var(--font-bold);font-size:var(--text-base);margin-bottom:4px}
+        .filatorio-badge{font-weight:var(--font-bold);font-size:var(--text-xs);padding:4px 8px;margin:2px;border-radius:8px;color:white}
+        .badge-4{background:var(--primary)}
+        .badge-5{background:var(--danger)}
+        .badge-6{background:var(--success)}
+        .badge-11{background:var(--accent)}
+        .history-table{width:100%;border-collapse:collapse;margin-top:20px;background:var(--white);border-radius:12px;overflow:hidden}
+        .history-table th{font-weight:var(--font-semibold);font-size:var(--text-sm);background:linear-gradient(135deg,var(--gray-50)0%,var(--gray-100)100%);
+            color:var(--gray-600);padding:16px 12px;text-align:left;border-bottom:2px solid var(--gray-200)}
+        .history-table td{padding:14px 12px;border-bottom:1px solid var(--gray-200)}
+        .history-table tr:hover{background:var(--primary-ultralight)}
+        .action-buttons{display:flex;gap:8px}
+        .edit-btn,.delete-btn{font-weight:var(--font-semibold);font-size:var(--text-xs);padding:8px 12px;border:none;border-radius:var(--border-radius-sm);cursor:pointer;color:white}
+        .edit-btn{background:var(--success)}
+        .delete-btn{background:var(--primary)}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:1000;padding:20px}
+        .modal{max-width:440px;padding:32px}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+        .modal-title{font-weight:var(--font-bold);font-size:var(--text-2xl)}
+        .close-btn{background:none;border:none;color:var(--gray-500);font-size:1.5em;cursor:pointer;padding:4px;border-radius:4px}
+        .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+        .cancel-btn{font-weight:var(--font-semibold);padding:12px 24px;background:var(--gray-100);color:var(--gray-600);border:1px solid var(--gray-300);border-radius:var(--border-radius-sm);cursor:pointer}
+        .help-btn{padding:10px 16px;background:var(--gray-100);border:1px solid var(--gray-300);border-radius:var(--border-radius-sm);cursor:pointer}
+        .help-section{margin-bottom:20px}
+        .help-section h4{margin-bottom:10px;color:var(--primary-dark)}
+        .color-guide{display:flex;flex-direction:column;gap:8px}
+        .color-item{padding:8px 12px;border-radius:var(--border-radius-sm);font-weight:var(--font-medium)}
+        @media (max-width:768px){body{font-size:15px}.header{padding:20px;margin-bottom:20px}.site-title{font-size:1.5rem}.lock-title{font-size:1.5rem}
+        .filatorios-grid{grid-template-columns:1fr}.navigation{flex-direction:column}.nav-btn{width:100%}.calendar-date{min-height:70px}
+        .calendar-section,.history-section,.lock-screen{padding:24px}}
+        @media (max-width:480px){.lock-screen{padding:32px 24px}.calendar-header,.history-header{flex-direction:column;align-items:flex-start}}
+    </style>
+</head>
+<body>
+    <div id="lockScreen" class="card lock-screen">
+        <div class="lock-icon">🔒</div>
+        <h1 class="lock-title">Acesso Restrito</h1>
+        <div class="turno-indicator">Turno B</div>
+        <p>Digite a senha para acessar o sistema</p>
+        <input type="password" id="passwordInput" class="password-input" placeholder="••••" maxlength="4">
+        <button onclick="checkPassword()" class="btn btn-primary">Acessar Sistema</button>
+        <div id="errorMessage" class="error-message">Senha incorreta! Tente novamente.</div>
+    </div>
+
+    <div id="content" class="content">
+        <div class="card header">
+            <h1 class="site-title">Controle de Filatórios</h1>
+            <p>Filatórios 4, 5, 6 e 11 - Gestão de Trocas</p>
+            <div class="navigation">
+                <button class="nav-btn active" onclick="showSection('filatorios')">🏭 Filatórios</button>
+                <button class="nav-btn" onclick="showSection('calendario')">📅 Calendário</button>
+                <button class="nav-btn" onclick="showSection('historico')">📋 Histórico</button>
+                <button class="help-btn" onclick="abrirHelpModal()">❓ Ajuda</button>
+            </div>
+        </div>
+
+        <div id="filatoriosSection" class="section" style="display:block">
+            <div class="filatorios-grid" id="filatoriosContainer"></div>
+        </div>
+
+        <div id="calendarioSection" class="section">
+            <div class="card calendar-section">
+                <div class="calendar-header">
+                    <h2 class="calendar-title">Calendário de Trocas</h2>
+                    <div>
+                        <select class="filter-select" id="mesCalendario">
+                            <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+                            <option value="2">Março</option><option value="3">Abril</option>
+                            <option value="4">Maio</option><option value="5">Junho</option>
+                            <option value="6">Julho</option><option value="7">Agosto</option>
+                            <option value="8">Setembro</option><option value="9">Outubro</option>
+                            <option value="10">Novembro</option><option value="11">Dezembro</option>
+                        </select>
+                        <select class="filter-select" id="anoCalendario">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="calendar-grid" id="calendarioGrid"></div>
+            </div>
+        </div>
+
+        <div id="historicoSection" class="section">
+            <div class="card history-section">
+                <div class="history-header">
+                    <h2 class="history-title">Histórico de Trocas</h2>
+                    <div>
+                        <select class="filter-select" id="filtroFilatorio">
+                            <option value="todos">Todos</option>
+                            <option value="4">Filatório 4</option>
+                            <option value="5">Filatório 5</option>
+                            <option value="6">Filatório 6</option>
+                            <option value="11">Filatório 11</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="exportarParaCSV()">📤 Exportar CSV</button>
+                    </div>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar no histórico...">
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Filatório</th>
+                            <th>N.E.</th>
+                            <th>Marca</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historicoBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal-overlay">
+        <div class="card modal">
+            <div class="modal-header">
+                <h3 class="modal-title">🎯 Guia Rápido</h3>
+                <button class="close-btn" onclick="fecharHelpModal()">✕</button>
+            </div>
+            <div class="help-content">
+                <div class="help-section">
+                    <h4>📝 Como Usar</h4>
+                    <ol>
+                        <li><strong>Filatórios:</strong> Gerencie informações e registre trocas</li>
+                        <li><strong>Calendário:</strong> Visualize trocas agendadas</li>
+                        <li><strong>Histórico:</strong> Consulte e edite registros passados</li>
+                    </ol>
+                </div>
+                <div class="help-section">
+                    <h4>🎨 Códigos de Cores</h4>
+                    <div class="color-guide">
+                        <div class="color-item status-ok">✅ OK - Dentro do prazo</div>
+                        <div class="color-item status-alerta">⚠️ Atenção - Próximo do prazo</div>
+                        <div class="color-item status-atrasado">🔶 Atrasado - Fora do prazo</div>
+                        <div class="color-item status-critico">🚨 Crítico - Atrasado há muito tempo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="card modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Registro</h3>
+                <button class="close-btn" onclick="fecharModal()">✕</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editIndex">
+                <div class="form-group">
+                    <label>Data da Troca</label>
+                    <input type="date" class="form-input" id="editData" required>
+                </div>
+                <div class="form-group">
+                    <label>Filatório</label>
+                    <select class="form-input" id="editFilatorio" required>
+                        <option value="4">Filatório 4</option>
+                        <option value="5">Filatório 5</option>
+                        <option value="6">Filatório 6</option>
+                        <option value="11">Filatório 11</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>N.E.</label>
+                    <input type="text" class="form-input" id="editNE" required>
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" class="form-input" id="editMarca" required>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea class="form-textarea" id="editObservacoes" placeholder="Adicione observações..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const filatoriosConfig=[{numero:4,ne:"NE-004",marca:"Rieter",diasUteis:30},{numero:5,ne:"NE-005",marca:"Toyota",diasUteis:45},{numero:6,ne:"NE-006",marca:"Murata",diasUteis:60},{numero:11,ne:"NE-011",marca:"Zinser",diasUteis:90}];
+        const CORRECT_PASSWORD="3453";
+        let historicoTrocas=[];
+        
+        function calcularProximaTroca(numero){
+            const ultimaTroca=document.getElementById('ultimaTroca'+numero).value;
+            const diasUteis=parseInt(document.getElementById('diasUteis'+numero).value);
+            const proximaTrocaElement=document.getElementById('proximaTroca'+numero);
+            if(ultimaTroca&&!isNaN(diasUteis)){
+                const[ano,mes,dia]=ultimaTroca.split('-');
+                const dataUltimaTroca=new Date(ano,mes-1,dia);
+                const dataProximaTroca=new Date(dataUltimaTroca);
+                dataProximaTroca.setDate(dataProximaTroca.getDate()+diasUteis);
+                const diaFormatado=String(dataProximaTroca.getDate()).padStart(2,'0');
+                const mesFormatado=String(dataProximaTroca.getMonth()+1).padStart(2,'0');
+                const anoFormatado=dataProximaTroca.getFullYear();
+                proximaTrocaElement.textContent=`${diaFormatado}/${mesFormatado}/${anoFormatado}`;
+                calcularDiasRestantes(numero);
+            }else{
+                proximaTrocaElement.textContent='-';
+                calcularDiasRestantes(numero);
+            }
+        }
+        
+        function calcularDiasRestantes(numero){
+            const proximaTrocaElement=document.getElementById('proximaTroca'+numero);
+            const diasRestantesElement=document.getElementById('diasRestantes'+numero);
+            const statusElement=document.getElementById('status'+numero);
+            if(!proximaTrocaElement||proximaTrocaElement.textContent==='-'){
+                diasRestantesElement.textContent='-';
+                statusElement.textContent='Sem dados';
+                statusElement.className='status-indicator status-atrasado';
+                return;
+            }
+            const hoje=new Date();
+            hoje.setHours(0,0,0,0);
+            const dataProximaTroca=parsearDataBR(proximaTrocaElement.textContent);
+            dataProximaTroca.setHours(0,0,0,0);
+            const diffTime=dataProximaTroca-hoje;
+            const diffDays=Math.ceil(diffTime/(1000*60*60*24));
+            if(diffDays>7){
+                statusElement.textContent='OK';
+                statusElement.className='status-indicator status-ok';
+                diasRestantesElement.textContent=diffDays+' dias';
+                diasRestantesElement.className='dias-restantes dias-positivo';
+            }else if(diffDays>=0){
+                statusElement.textContent='Atenção';
+                statusElement.className='status-indicator status-alerta';
+                diasRestantesElement.textContent=diffDays+' dias';
+                diasRestantesElement.className='dias-restantes dias-alerta';
+            }else{
+                statusElement.textContent='Atrasado';
+                statusElement.className='status-indicator status-atrasado';
+                diasRestantesElement.textContent=Math.abs(diffDays)+' dias atrasado';
+                diasRestantesElement.className='dias-restantes dias-negativo';
+            }
+        }
+        
+        function parsearDataBR(dataStr){
+            const[dia,mes,ano]=dataStr.split('/');
+            return new Date(ano,mes-1,dia);
+        }
+        
+        function inicializarSistema(){
+            document.getElementById('passwordInput').focus();
+            const hoje=new Date();
+            document.getElementById('mesCalendario').value=hoje.getMonth();
+            document.getElementById('anoCalendario').value=hoje.getFullYear();
+            gerarFilatorios();
+            implementarBusca();
+        }
+        
+        function gerarFilatorios(){
+            const container=document.getElementById('filatoriosContainer');
+            container.innerHTML=filatoriosConfig.map(filatorio=>`
+                <div class="card filatorio-card">
+                    <div class="filatorio-header">
+                        <div class="filatorio-number">Filatório #${filatorio.numero}</div>
+                        <div class="status-indicator" id="status${filatorio.numero}">Carregando...</div>
+                    </div>
+                    <div class="form-group">
+                        <label>N.E.</label>
+                        <input type="text" class="form-input" id="ne${filatorio.numero}" value="${filatorio.ne}">
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" class="form-input" id="marca${filatorio.numero}" value="${filatorio.marca}">
+                    </div>
+                    <div class="form-group">
+                        <label>Observações</label>
+                        <textarea class="form-textarea" id="observacoes${filatorio.numero}" placeholder="Observações..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Última Troca</label>
+                        <input type="date" class="form-input" id="ultimaTroca${filatorio.numero}" onchange="calcularProximaTroca(${filatorio.numero})">
+                    </div>
+                    <div class="form-group">
+                        <label>Dias para Troca</label>
+                        <input type="number" class="form-input" id="diasUteis${filatorio.numero}" value="${filatorio.diasUteis}" min="1" onchange="calcularProximaTroca(${filatorio.numero})">
+                    </div>
+                    <div class="proxima-troca">
+                        <div class="info-row">
+                            <span class="info-label">Próxima Troca:</span>
+                            <span class="info-value" id="proximaTroca${filatorio.numero}">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Dias Restantes:</span>
+                            <span class="info-value" id="diasRestantes${filatorio.numero}">-</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarDados(${filatorio.numero})">💾 Salvar Dados</button>
+                    <button class="btn btn-secondary" onclick="registrarTroca(${filatorio.numero})">📝 Registrar Troca</button>
+                </div>
+            `).join('');
+            carregarDadosSalvos();
+        }
+        
+        function checkPassword(){
+            const password=document.getElementById('passwordInput').value;
+            const errorMessage=document.getElementById('errorMessage');
+            if(password===CORRECT_PASSWORD){
+                document.getElementById('lockScreen').style.display='none';
+                document.getElementById('content').style.display='block';
+                carregarHistoricoSalvo();
+                inicializarCalculos();
+            }else{
+                errorMessage.style.display='block';
+                document.getElementById('passwordInput').value='';
+            }
+        }
+        
+        function showSection(sectionName){
+            document.querySelectorAll('.section').forEach(section=>section.style.display='none');
+            document.querySelectorAll('.nav-btn').forEach(btn=>btn.classList.remove('active'));
+            document.getElementById(sectionName+'Section').style.display='block';
+            event.target.classList.add('active');
+            if(sectionName==='calendario')atualizarCalendario();
+            else if(sectionName==='historico')carregarHistorico();
+        }
+        
+        function inicializarCalculos(){
+            filatoriosConfig.forEach(filatorio=>calcularProximaTroca(filatorio.numero));
+        }
+        
+        function salvarDados(numero){
+            const dados={
+                ne:document.getElementById('ne'+numero).value,
+                marca:document.getElementById('marca'+numero).value,
+                observacoes:document.getElementById('observacoes'+numero).value,
+                ultimaTroca:document.getElementById('ultimaTroca'+numero).value,
+                diasUteis:document.getElementById('diasUteis'+numero).value,
+                proximaTroca:document.getElementById('proximaTroca'+numero).textContent
+            };
+            localStorage.setItem('filatorio'+numero,JSON.stringify(dados));
+            calcularProximaTroca(numero);
+        }
+        
+        function carregarDadosSalvos(){
+            filatoriosConfig.forEach(filatorio=>{
+                const dadosSalvos=localStorage.getItem('filatorio'+filatorio.numero);
+                if(dadosSalvos){
+                    const dados=JSON.parse(dadosSalvos);
+                    document.getElementById('ne'+filatorio.numero).value=dados.ne||'';
+                    document.getElementById('marca'+filatorio.numero).value=dados.marca||'';
+                    document.getElementById('observacoes'+filatorio.numero).value=dados.observacoes||'';
+                    document.getElementById('ultimaTroca'+filatorio.numero).value=dados.ultimaTroca||'';
+                    document.getElementById('diasUteis'+filatorio.numero).value=dados.diasUteis||'';
+                    document.getElementById('proximaTroca'+filatorio.numero).textContent=dados.proximaTroca||'-';
+                }
+            });
+        }
+        
+        function registrarTroca(numero){
+            const hoje=new Date().toISOString().split('T')[0];
+            const troca={
+                data:hoje,
+                filatorio:numero,
+                ne:document.getElementById('ne'+numero).value,
+                marca:document.getElementById('marca'+numero).value,
+                observacoes:document.getElementById('observacoes'+numero).value
+            };
+            historicoTrocas.unshift(troca);
+            localStorage.setItem('historicoTrocas',JSON.stringify(historicoTrocas));
+            document.getElementById('ultimaTroca'+numero).value=hoje;
+            calcularProximaTroca(numero);
+        }
+        
+        function carregarHistorico(){
+            const tbody=document.getElementById('historicoBody');
+            const filtro=document.getElementById('filtroFilatorio').value;
+            let historicoFiltrado=historicoTrocas;
+            if(filtro!=='todos'){
+                historicoFiltrado=historicoTrocas.filter(troca=>troca.filatorio==filtro);
+            }
+            tbody.innerHTML=historicoFiltrado.map((troca,index)=>`
+                <tr>
+                    <td>${formatarData(troca.data)}</td>
+                    <td>Filatório ${troca.filatorio}</td>
+                    <td>${troca.ne}</td>
+                    <td>${troca.marca}</td>
+                    <td>${troca.observacoes||'-'}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="edit-btn" onclick="editarRegistro(${index})">Editar</button>
+                            <button class="delete-btn" onclick="excluirRegistro(${index})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function carregarHistoricoSalvo(){
+            const historicoSalvo=localStorage.getItem('historicoTrocas');
+            if(historicoSalvo)historicoTrocas=JSON.parse(historicoSalvo);
+        }
+        
+        function implementarBusca(){
+            document.getElementById('searchInput').addEventListener('input',function(e){
+                const termo=e.target.value.toLowerCase();
+                const linhas=document.querySelectorAll('#historicoBody tr');
+                linhas.forEach(linha=>{
+                    linha.style.display=linha.textContent.toLowerCase().includes(termo)?'':'none';
+                });
+            });
+        }
+        
+        function exportarParaCSV(){
+            const cabecalho=['Data','Filatório','N.E.','Marca','Observações'];
+            const dados=historicoTrocas.map(troca=>[
+                troca.data,
+                troca.filatorio,
+                troca.ne,
+                troca.marca,
+                troca.observacoes||''
+            ]);
+            const csv=[cabecalho,...dados].map(linha=>linha.join(',')).join('\n');
+            const blob=new Blob([csv],{type:'text/csv'});
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;
+            a.download=`historico_trocas_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+        
+        function formatarData(dataStr){
+            const[ano,mes,dia]=dataStr.split('-');
+            return`${dia}/${mes}/${ano}`;
+        }
+        
+        function editarRegistro(index){
+            const troca=historicoTrocas[index];
+            document.getElementById('editIndex').value=index;
+            document.getElementById('editData').value=troca.data;
+            document.getElementById('editFilatorio').value=troca.filatorio;
+            document.getElementById('editNE').value=troca.ne;
+            document.getElementById('editMarca').value=troca.marca;
+            document.getElementById('editObservacoes').value=troca.observacoes||'';
+            document.getElementById('editModal').style.display='flex';
+        }
+        
+        function fecharModal(){
+            document.getElementById('editModal').style.display='none';
+        }
+        
+        function abrirHelpModal(){
+            document.getElementById('helpModal').style.display='flex';
+        }
+        
+        function fecharHelpModal(){
+            document.getElementById('helpModal').style.display='none';
+        }
+        
+        function excluirRegistro(index){
+            if(confirm('Excluir este registro?')){
+                historicoTrocas.splice(index,1);
+                localStorage.setItem('historicoTrocas',JSON.stringify(historicoTrocas));
+                carregarHistorico();
+            }
+        }
+        
+        function atualizarCalendario(){
+            const mes=parseInt(document.getElementById('mesCalendario').value);
+            const ano=parseInt(document.getElementById('anoCalendario').value);
+            const calendarioGrid=document.getElementById('calendarioGrid');
+            calendarioGrid.innerHTML='';
+            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(dia=>{
+                const dayElement=document.createElement('div');
+                dayElement.className='calendar-day';
+                dayElement.textContent=dia;
+                calendarioGrid.appendChild(dayElement);
+            });
+            const primeiroDia=new Date(ano,mes,1);
+            for(let i=0;i<primeiroDia.getDay();i++){
+                calendarioGrid.appendChild(document.createElement('div'));
+            }
+            const ultimoDia=new Date(ano,mes+1,0);
+            const hoje=new Date();
+            for(let dia=1;dia<=ultimoDia.getDate();dia++){
+                const dateElement=document.createElement('div');
+                dateElement.className='calendar-date';
+                const dataAtual=new Date(ano,mes,dia);
+                if(dataAtual.toDateString()===hoje.toDateString()){
+                    dateElement.classList.add('today');
+                }
+                const dateNumber=document.createElement('div');
+                dateNumber.className='date-number';
+                dateNumber.textContent=dia;
+                dateElement.appendChild(dateNumber);
+                const dataStr=`${String(dia).padStart(2,'0')}/${String(mes+1).padStart(2,'0')}/${ano}`;
+                filatoriosConfig.forEach(filatorio=>{
+                    const proximaTroca=document.getElementById('proximaTroca'+filatorio.numero).textContent;
+                    if(proximaTroca===dataStr){
+                        dateElement.classList.add('has-troca');
+                        const badge=document.createElement('span');
+                        badge.className=`filatorio-badge badge-${filatorio.numero}`;
+                        badge.textContent=`F${filatorio.numero}`;
+                        dateElement.appendChild(badge);
+                    }
+                });
+                calendarioGrid.appendChild(dateElement);
+            }
+        }
+        
+        document.getElementById('editForm').addEventListener('submit',function(e){
+            e.preventDefault();
+            const index=document.getElementById('editIndex').value;
+            historicoTrocas[index]={
+                data:document.getElementById('editData').value,
+                filatorio:parseInt(document.getElementById('editFilatorio').value),
+                ne:document.getElementById('editNE').value,
+                marca:document.getElementById('editMarca').value,
+                observacoes:document.getElementById('editObservacoes').value
+            };
+            localStorage.setItem('historicoTrocas',JSON.stringify(historicoTrocas));
+            carregarHistorico();
+            fecharModal();
+        });
+        
+        document.getElementById('passwordInput').addEventListener('keypress',function(e){
+            if(e.key==='Enter')checkPassword();
+        });
+        
+        document.getElementById('mesCalendario').addEventListener('change',atualizarCalendario);
+        document.getElementById('anoCalendario').addEventListener('change',atualizarCalendario);
+        document.getElementById('filtroFilatorio').addEventListener('change',carregarHistorico);
+        
+        window.onload=inicializarSistema;
+    </script>
+</body>
+</html>
